@@ -1,0 +1,48 @@
+Vesicle
+Papule
+Macule
+Plaque
+Abscess
+Pustule
+Bulla
+Patch
+Nodule
+Ulcer
+Crust
+Erosion
+Excoriation
+Atrophy
+Exudate
+Purpura, Petechiae
+Fissure
+Induration
+Xerosis
+Telangiectasia
+Scale
+Scar
+Friable
+Sclerosis
+Pedunculated
+Exophytic/Fungating
+Warty/Papillomatous
+Dome-shaped
+Flat topped
+Brown (Hyperpigmentation)
+Translucent
+White (Hypopigmentation)
+Purple
+Yellow
+Black
+Erythema
+Comedo
+Lichenification
+Blue
+Umbilicated
+Poikiloderma
+Salmon
+Wheal
+Acuminate
+Burrow
+Gray
+Pigmented
+Cyst
