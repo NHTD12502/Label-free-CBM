@@ -3,6 +3,8 @@ import math
 import torch
 import clip
 import data_utils
+from open_clip import create_model_from_pretrained, get_tokenizer # works on open-clip-torch>=2.23.0, timm>=0.9.8
+
 
 from tqdm import tqdm
 from torch.utils.data import DataLoader
@@ -113,8 +115,13 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
         
     if _all_saved(save_names):
         return
-    
-    clip_model, clip_preprocess = clip.load(clip_name, device=device)
+    #==============================================
+    if clip_name == "biomed":
+        clip_model, clip_preprocess = create_model_from_pretrained('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
+        clip_model =clip_model.to(device)
+    #===================================================
+    else:
+        clip_model, clip_preprocess = clip.load(clip_name, device=device)
     
     if target_name.startswith("clip_"):
         target_model, target_preprocess = clip.load(target_name[5:], device=device)
@@ -126,7 +133,13 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
 
     with open(concept_set, 'r') as f: 
         words = (f.read()).split('\n')
-    text = clip.tokenize(["{}".format(word) for word in words]).to(device)
+    #===================================================
+    if clip_name == "biomed":
+        tokenizer = get_tokenizer('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
+        text = tokenizer(["{}".format(word) for word in words]).to(device)
+    #===================================================
+    else:
+        text = clip.tokenize(["{}".format(word) for word in words]).to(device)
     
     save_clip_text_features(clip_model, text, text_save_name, batch_size)
     
