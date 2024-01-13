@@ -9,9 +9,9 @@ DATASET_ROOTS = {
     "imagenet_train": "YOUR_PATH/CLS-LOC/train/",
     "imagenet_val": "YOUR_PATH/ImageNet_val/",
     "cub_train":"data/CUB/train",
-    "cub_val":"data/CUB/test"
-    "skincon_train": "/content/drive/MyDrive/Colab_Notebooks/label_free/skincon/train"
-    "skincon_val": "/content/drive/MyDrive/Colab_Notebooks/label_free/skincon/val"
+    "cub_val":"data/CUB/test",
+    "skincon_train":"content/drive/MyDrive/Colab_Notebooks/label_free/skincon/train",
+    "skincon_val":"content/drive/MyDrive/Colab_Notebooks/label_free/skincon/val"
 }
 
 LABEL_FILES = {"places365":"data/categories_places365_clean.txt",
