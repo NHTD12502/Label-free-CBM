@@ -3,6 +3,8 @@ import math
 import torch
 import clip
 import data_utils
+from open_clip import create_model_from_pretrained, get_tokenizer # works on open-clip-torch>=2.23.0, timm>=0.9.8
+
 
 from tqdm import tqdm
 from torch.utils.data import DataLoader
@@ -30,7 +32,7 @@ def save_target_activations(target_model, dataset, save_name, target_layers = ["
         hooks[target_layer] = eval(command)
     
     with torch.no_grad():
-        for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=8, pin_memory=True)):
+        for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=4, pin_memory=True)):
             features = target_model(images.to(device))
     
     for target_layer in target_layers:
@@ -52,7 +54,7 @@ def save_clip_image_features(model, dataset, save_name, batch_size=1000 , device
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     with torch.no_grad():
-        for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=8, pin_memory=True)):
+        for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=4, pin_memory=True)):
             features = model.encode_image(images.to(device))
             all_features.append(features.cpu())
     torch.save(torch.cat(all_features), save_name)
@@ -60,6 +62,30 @@ def save_clip_image_features(model, dataset, save_name, batch_size=1000 , device
     del all_features
     torch.cuda.empty_cache()
     return
+
+#========================
+def save_deepderm_image_features(model, dataset, save_name, batch_size=1000 , device = "cuda"):
+    _make_save_dir(save_name)
+    all_features = []
+    
+    if os.path.exists(save_name):
+        return
+    
+    save_dir = save_name[:save_name.rfind("/")]
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    with torch.no_grad():
+        for images, labels in tqdm(DataLoader(dataset, batch_size, num_workers=4, pin_memory=True)):
+            features = model(images.to(device))
+            all_features.append(features.cpu())
+    torch.save(torch.cat(all_features), save_name)
+    #free memory
+    del all_features
+    torch.cuda.empty_cache()
+    return
+
+
+#===================
 
 def save_clip_text_features(model, text, save_name, batch_size=1000):
     
@@ -89,8 +115,13 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
         
     if _all_saved(save_names):
         return
-    
-    clip_model, clip_preprocess = clip.load(clip_name, device=device)
+    #==============================================
+    if clip_name == "biomed":
+        clip_model, clip_preprocess = create_model_from_pretrained('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
+        clip_model =clip_model.to(device)
+    #===================================================
+    else:
+        clip_model, clip_preprocess = clip.load(clip_name, device=device)
     
     if target_name.startswith("clip_"):
         target_model, target_preprocess = clip.load(target_name[5:], device=device)
@@ -102,13 +133,21 @@ def save_activations(clip_name, target_name, target_layers, d_probe,
 
     with open(concept_set, 'r') as f: 
         words = (f.read()).split('\n')
-    text = clip.tokenize(["{}".format(word) for word in words]).to(device)
+    #===================================================
+    if clip_name == "biomed":
+        tokenizer = get_tokenizer('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
+        text = tokenizer(["{}".format(word) for word in words]).to(device)
+    #===================================================
+    else:
+        text = clip.tokenize(["{}".format(word) for word in words]).to(device)
     
     save_clip_text_features(clip_model, text, text_save_name, batch_size)
     
     save_clip_image_features(clip_model, data_c, clip_save_name, batch_size, device)
-    if target_name.startswith("clip_"):
+    if target_name.startswith("clip_") :
         save_clip_image_features(target_model, data_t, target_save_name, batch_size, device)
+    elif  target_name == 'deepderm':
+        save_deepderm_image_features(target_model, data_t, target_save_name, batch_size, device)
     else:
         save_target_activations(target_model, data_t, target_save_name, target_layers,
                                 batch_size, device, pool_mode)
@@ -164,6 +203,10 @@ def get_save_names(clip_name, target_name, target_layer, d_probe, concept_set, p
     
     if target_name.startswith("clip_"):
         target_save_name = "{}/{}_{}.pt".format(save_dir, d_probe, target_name.replace('/', ''))
+    #====================================================
+    elif target_name == "deepderm":
+        target_save_name = "{}/{}_{}_{}{}.pt".format(save_dir, d_probe, target_name, '{}', PM_SUFFIX[pool_mode])
+
     else:
         target_save_name = "{}/{}_{}_{}{}.pt".format(save_dir, d_probe, target_name, target_layer,
                                                  PM_SUFFIX[pool_mode])
@@ -222,7 +265,7 @@ def get_preds_cbm(model, dataset, device, batch_size=250, num_workers=2):
 def get_concept_act_by_pred(model, dataset, device):
     preds = []
     concept_acts = []
-    for images, labels in tqdm(DataLoader(dataset, 500, num_workers=8, pin_memory=True)):
+    for images, labels in tqdm(DataLoader(dataset, 500, num_workers=4, pin_memory=True)):
         with torch.no_grad():
             outs, concept_act = model(images.to(device))
             concept_acts.append(concept_act.cpu())
