@@ -10,13 +10,16 @@ DATASET_ROOTS = {
     "imagenet_val": "YOUR_PATH/ImageNet_val/",
     "cub_train":"data/CUB/train",
     "cub_val":"data/CUB/test"
+    "skincon_train": "/content/drive/MyDrive/Colab_Notebooks/label_free/skincon/train"
+    "skincon_val": "/content/drive/MyDrive/Colab_Notebooks/label_free/skincon/val"
 }
 
 LABEL_FILES = {"places365":"data/categories_places365_clean.txt",
                "imagenet":"data/imagenet_classes.txt",
                "cifar10":"data/cifar10_classes.txt",
                "cifar100":"data/cifar100_classes.txt",
-               "cub":"data/cub_classes.txt"}
+               "cub":"data/cub_classes.txt",
+              "skincon":"data/skincon_class.txt"}
 
 def get_resnet_imagenet_preprocess():
     target_mean = [0.485, 0.456, 0.406]
