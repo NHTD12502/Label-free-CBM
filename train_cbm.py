@@ -31,7 +31,7 @@ parser.add_argument("--activation_dir", type=str, default='saved_activations', h
 parser.add_argument("--save_dir", type=str, default='saved_models', help="where to save trained models")
 parser.add_argument("--clip_cutoff", type=float, default=0.25, help="concepts with smaller top5 clip activation will be deleted")
 parser.add_argument("--proj_steps", type=int, default=1000, help="how many steps to train the projection layer for")
-parser.add_argument("--interpretability_cutoff", type=float, default=0.45, help="concepts with smaller similarity to target concept will be deleted")
+parser.add_argument("--interpretability_cutoff", type=float, default=0.2, help="concepts with smaller similarity to target concept will be deleted")
 parser.add_argument("--lam", type=float, default=0.0007, help="Sparsity regularization parameter, higher->more sparse")
 parser.add_argument("--n_iters", type=int, default=1000, help="How many iterations to run the final layer solver for")
 parser.add_argument("--print", action='store_true', help="Print all concepts being deleted in this stage")
@@ -168,6 +168,7 @@ def train_cbm_and_save(args):
     
     del clip_features, val_clip_features
     
+    print(len(concepts))
     W_c = proj_layer.weight[interpretable]
     proj_layer = torch.nn.Linear(in_features=target_features.shape[1], out_features=len(concepts), bias=False)
     proj_layer.load_state_dict({"weight":W_c})
@@ -200,6 +201,10 @@ def train_cbm_and_save(args):
     val_loader = DataLoader(val_ds, batch_size=args.saga_batch_size, shuffle=False)
 
     # Make linear model and zero initialize
+    print(train_c.shape)
+    print(train_c.shape[1])
+    print(train_c.shape[0])
+    print(len(classes))
     linear = torch.nn.Linear(train_c.shape[1],len(classes)).to(args.device)
     linear.weight.data.zero_()
     linear.bias.data.zero_()
